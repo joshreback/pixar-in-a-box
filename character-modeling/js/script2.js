@@ -12,6 +12,19 @@ Point.prototype.copyWeights = function(point) {
   this.wt4 = point.wt4;
 }
 
+Point.prototype.refreshLocation = function() {
+  var controlPoints = _segmentPoints(controlShape);
+
+  var newPoint = (
+    controlPoints[0] * this.wt1 +
+    controlPoints[1] * this.wt2 +
+    controlPoints[2] * this.wt3 +
+    controlPoints[3] * this.wt4);
+
+  this.x = newPoint.x;
+  this.y = newPoint.y;
+}
+
 /////////////////////////////////////////////////
 
 var controlShape = new Path(
@@ -30,6 +43,38 @@ currentShape.fullySelected = true;
 currentShape.closed = true;
 
 animate = false;
+
+controlShape.onMouseDrag = function(event) {
+  // debugger;
+  var controlShapePoints = _segmentPoints(controlShape);
+  var currentShapePoints = _segmentPoints(currentShape);
+
+  // return entry from "points" that's closest to point
+  var getClosestPoint = function(point, points) {
+    var closestDistance = Infinity,
+      closestPoint = null;
+
+    // find closest point to click
+    for (var i = 0; i < points.length; i++) {
+      if (_distance(point, points[i]) < closestDistance) {
+        closestPoint = points[i];
+        closestDistance = _distance(point, points[i]);
+      }
+    }
+    return closestPoint;
+  }
+
+  // this is the point that needs to move in response to the mouse drag
+  var closestPoint = getClosestPoint(event.point, controlShapePoints);
+  // update the point
+  closestPoint.x = event.point.x;
+  closestPoint.y = event.point.y;
+
+  // then update each of the points in currentShape according to the new location
+  for (var i = 0; i < currentShapePoints.length; i++) {
+    currentShapePoints[i].refreshLocation();
+  }
+}
 
 // compute midpoints for each pair of points on the currentShape
 // and add each of those new midpoints to the currentShape
@@ -101,7 +146,12 @@ onFrame = function(event) {
     points[i].y += yDist / (60 * animationLength);
   }
 
-  if (finished) animate = false;  // we are done
+  if (finished) {
+    animate = false;  // we are done
+    for (var i = 0; i < points.length; i++) {
+      points[i].dest = null
+    }
+  }
 }
 
 _initializeCurrentShape = function(currentShape) {
@@ -143,6 +193,10 @@ _segmentPoints = function(shape) {
     return segment.point
   });
   return points;
+}
+
+_distance = function(pt1, pt2) {
+  return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
 
 globals = {
