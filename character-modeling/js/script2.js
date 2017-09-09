@@ -29,6 +29,8 @@ currentShape = new Path();
 currentShape.fullySelected = true;
 currentShape.closed = true;
 
+animate = false;
+
 // compute midpoints for each pair of points on the currentShape
 // and add each of those new midpoints to the currentShape
 handleClickSplit = function(e) {
@@ -70,18 +72,37 @@ handleClickAverage = function(e) {
     var midpoint = _midPoint(left, right);
     left.dest = midpoint;
   }
-  for (var i = 0; i < numSegments; i++) {
-    points[i].x = points[i].dest.x;
-    points[i].y = points[i].dest.y;
-    points[i].copyWeights(points[i].dest);
-    points[i].dest = null;
-  }
+  animate = true;
 }
 
 // animate the movement from each point in currentShape to its destinationPoint
-// onFrame = function(event) {
+onFrame = function(event) {
+  if (!animate) return;
 
-// }
+  //   // if there is a newAveragedShape computed, animate the transition b/t the
+  // currentShape and the newAveragedShape
+  var animationLength = globals.animationSpeed(),  // seconds
+    points = _segmentPoints(currentShape),
+    xDist,
+    yDist,
+    finished = true;
+
+  // move currentShape coords towards corresponding averageShaped coords slightly
+  for (var i = 0; i < points.length; i++) {
+    xDist = points[i].dest.x - points[i].x;
+    yDist = points[i].dest.y - points[i].y;
+    points[i].copyWeights(points[i].dest);  // this gets done redundantly...
+
+    if (!(xDist < 0.001 && yDist < 0.001)){
+      finished = false;
+    }
+
+    points[i].x += xDist / (60 * animationLength);
+    points[i].y += yDist / (60 * animationLength);
+  }
+
+  if (finished) animate = false;  // we are done
+}
 
 _initializeCurrentShape = function(currentShape) {
   var point = new Point(controlShape.segments[0].point);
