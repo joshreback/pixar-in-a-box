@@ -45,7 +45,6 @@ currentShape.closed = true;
 animate = false;
 
 controlShape.onMouseDrag = function(event) {
-  // debugger;
   var controlShapePoints = _segmentPoints(controlShape);
   var currentShapePoints = _segmentPoints(currentShape);
 
