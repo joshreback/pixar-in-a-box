@@ -6,7 +6,9 @@ B.AB_t = 1;
 B.BC_t = 0;
 C = controlShape.add(new Point(120, 315)).point;
 C.t = 1;
-stringArtArr = []
+
+stringArtArr = [];
+var parabola;
 
 // controlShape.closed = true;
 controlShape.fullySelected = true;
@@ -42,6 +44,8 @@ controlShape.onMouseDrag = function(event) {
     }
   }
 
+
+  // update controlPoint
   var point = getClosestPoint(event.point);
   point.x = event.point.x;
   point.y = event.point.y;
@@ -49,8 +53,9 @@ controlShape.onMouseDrag = function(event) {
   // remove prior stringArt
   stringArtArr.forEach(function(art) {
     art.remove();
-  })
+  });
 
+  // update stringArt
   var ABpt, BCpt, midIndex = (controlShape.segments.length - 1) / 2;
   for (var i = 0; i < midIndex; i++) {
     ABpt = controlShape.segments[i].point;
@@ -59,8 +64,10 @@ controlShape.onMouseDrag = function(event) {
     refreshPointLocation(BCpt);
     generateStringArt(ABpt, BCpt);
   }
-}
 
+  // and redraw parabola
+  if (parabola) drawParabola();
+}
 
 generateStringArt = function(pt1, pt2) {
   stringArt = new Path(pt1, pt2);
@@ -113,10 +120,40 @@ generateMidpoint = function(e) {
   }
 }
 
+// Draw parabola by applying formula to Q (on AB edge) and R (on BC edge)
+drawParabola = function(e) {
+  if (parabola) {
+    parabola.remove();
+  }
+
+  parabola = new Path();
+  parabola.strokeColor = 'green';
+  parabola.fillColor = 'white';
+
+  var Q, R, P, t, halfway = (controlShape.segments.length - 1) / 2;
+  for (var i = 0; i <= halfway; i++) {
+    Q = controlShape.segments[i].point;
+    R = controlShape.segments[halfway + i].point;
+    t = Q == B ? Q.AB_t : Q.t;
+
+    P = new Point(
+      (1-t)*Q.x + t*R.x,
+      (1-t)*Q.y + t*R.y
+    )
+    parabola.add(P);
+  }
+
+  stringArtArr.forEach(function(art){
+    art.visible = false;
+  })
+
+}
+
 _distance = function(pt1, pt2) {
   return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
 
 globals = {
-  generateMidpoint: generateMidpoint
+  generateMidpoint: generateMidpoint,
+  drawParabola: drawParabola
 }
