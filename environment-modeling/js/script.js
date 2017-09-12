@@ -7,31 +7,42 @@ B.BC_t = 0;
 C = controlShape.add(new Point(120, 315)).point;
 C.t = 1;
 
-stringArtArr = [];
+var annotations = new Path();
+var stringArtArr = [];
 var parabola;
 
 // controlShape.closed = true;
 controlShape.fullySelected = true;
 controlShape.fillColor = 'white';
 
+var getClosestPoint = function(point) {
+  var points = [A, B, C],
+    closestDistance = Infinity,
+    closestPoint = null;
+
+  // find closest point to click
+  for (var i = 0; i < points.length; i++) {
+    if (_distance(point, points[i]) < closestDistance) {
+      closestPoint = points[i];
+      closestDistance = _distance(point, points[i]);
+    }
+  }
+  return closestPoint;
+}
+
+controlShape.onMouseDown = function(event) {
+  var point = getClosestPoint(event.point);
+  if (_distance(point, event.point) > 20) return;
+
+  var text = new PointText(point.x, point.y);
+  text.content = "(" + point.x + ", " + point.y + ")";
+  annotations.add(text);
+  text.removeOnUp();
+}
+
 // move the controlShape in accordance with the mouse drag
 // and drag all of the Q's and R's along with it
 controlShape.onMouseDrag = function(event) {
-  var getClosestPoint = function(point) {
-    var points = [A, B, C],
-      closestDistance = Infinity,
-      closestPoint = null;
-
-    // find closest point to click
-    for (var i = 0; i < points.length; i++) {
-      if (_distance(point, points[i]) < closestDistance) {
-        closestPoint = points[i];
-        closestDistance = _distance(point, points[i]);
-      }
-    }
-    return closestPoint;
-  }
-
   var refreshPointLocation = function(point) {
     if (point.edge == undefined) return;
     var t = point.t;
@@ -43,7 +54,6 @@ controlShape.onMouseDrag = function(event) {
       point.y = (1.0-t)*B.y + t*C.y;
     }
   }
-
 
   // update controlPoint
   var point = getClosestPoint(event.point);
@@ -129,6 +139,7 @@ drawParabola = function(e) {
   parabola = new Path();
   parabola.strokeColor = 'green';
   parabola.fillColor = 'white';
+  parabola.strokeWidth = 3;
 
   var Q, R, P, t, halfway = (controlShape.segments.length - 1) / 2;
   for (var i = 0; i <= halfway; i++) {
@@ -146,7 +157,20 @@ drawParabola = function(e) {
   stringArtArr.forEach(function(art){
     art.visible = false;
   })
+}
 
+// generate skeleton by drawing a perpendicular line at each point
+generateSkeleton = function(e) {
+  var skeletonWidth = 10;
+  if (!parabola) drawParabola();
+
+  var orthogonalVec, startPt, endPt, P;
+  for (var i = 0; i < controlShape.segments.length; i++){
+    P = controlShape.segments[i].point;
+    orthogonalVec = new Point(-P.y, P.x);
+    orthogonalVec += P;
+
+  }
 }
 
 _distance = function(pt1, pt2) {
@@ -155,5 +179,6 @@ _distance = function(pt1, pt2) {
 
 globals = {
   generateMidpoint: generateMidpoint,
-  drawParabola: drawParabola
+  drawParabola: drawParabola,
+  generateSkeleton: generateSkeleton
 }
