@@ -9,6 +9,7 @@ C.t = 1;
 
 var annotations = new Path();
 var stringArtArr = [];
+var orthogonals = [];
 var parabola;
 
 // controlShape.closed = true;
@@ -80,7 +81,7 @@ controlShape.onMouseDrag = function(event) {
 }
 
 generateStringArt = function(pt1, pt2) {
-  stringArt = new Path(pt1, pt2);
+  stringArt = new Path.Line(pt1, pt2);
   stringArt.strokeColor = 'black';
   stringArt.fillColor = 'white';
   stringArtArr.push(stringArt);
@@ -162,19 +163,28 @@ drawParabola = function(e) {
 // generate skeleton by drawing a perpendicular line at each point
 generateSkeleton = function(e) {
   var skeletonWidth = 10;
+
   if (!parabola) drawParabola();
 
-  var orthogonalVec, startPt, endPt, P;
-  for (var i = 0; i < controlShape.segments.length; i++){
-    P = controlShape.segments[i].point;
-    orthogonalVec = new Point(-P.y, P.x);
-    orthogonalVec += P;
-
+  var vec, skeletonPath, P;
+  for (var i = 0; i < stringArtArr.length; i++){
+    debugger;
+    vec = stringArtArr[i].getNormalAt(0);
+    P = parabola.segments[i+1].point;
+    skeletonPath = new Path(vec.subtract(5), vec.add(5));
+    skeletonPath.strokeColor = 'red';
+    skeletonPath = skeletonPath.translate(P);
   }
 }
 
 _distance = function(pt1, pt2) {
   return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
+}
+
+_lineVec = function(path) {
+  return new Point(
+    path.segments[1].point.x - path.segments[0].point.x,
+    path.segments[1].point.y - path.segments[0].point.y);
 }
 
 globals = {
