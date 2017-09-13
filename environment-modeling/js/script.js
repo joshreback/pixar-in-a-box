@@ -4,13 +4,13 @@ A.t = 0;
 B = controlShape.add(new Point(225, 200)).point;
 B.AB_t = 1;
 B.BC_t = 0;
-C = controlShape.add(new Point(120, 315)).point;
+C = controlShape.add(new Point(100, 315)).point;
 C.t = 1;
 
-var annotations = new Path();
-var stringArtArr = [];
+stringArtArr = [];
 var orthogonals = [];
-var parabola;
+var annotations = new Path();
+var parabola = new Path();
 
 // controlShape.closed = true;
 controlShape.fullySelected = true;
@@ -39,7 +39,7 @@ controlShape.onMouseDown = function(event) {
   text.content = "(" + point.x + ", " + point.y + ")";
   annotations.add(text);
   text.removeOnUp();
-}
+};
 
 // move the controlShape in accordance with the mouse drag
 // and drag all of the Q's and R's along with it
@@ -65,15 +65,16 @@ controlShape.onMouseDrag = function(event) {
   stringArtArr.forEach(function(art) {
     art.remove();
   });
+  stringArtArr = [];
 
   // update stringArt
   var ABpt, BCpt, midIndex = (controlShape.segments.length - 1) / 2;
-  for (var i = 0; i < midIndex; i++) {
+  for (var i = 1; i < midIndex; i++) {
     ABpt = controlShape.segments[i].point;
     BCpt = controlShape.segments[midIndex + i].point;
     refreshPointLocation(ABpt);
     refreshPointLocation(BCpt);
-    generateStringArt(ABpt, BCpt);
+    stringArtArr.push(generateStringArt(ABpt, BCpt));
   }
 
   // and redraw parabola
@@ -81,10 +82,10 @@ controlShape.onMouseDrag = function(event) {
 }
 
 generateStringArt = function(pt1, pt2) {
-  stringArt = new Path.Line(pt1, pt2);
+  var stringArt = new Path.Line(pt1, pt2);
   stringArt.strokeColor = 'black';
   stringArt.fillColor = 'white';
-  stringArtArr.push(stringArt);
+  return stringArt;
 }
 
 // generate a midpoint for each consecutive pair of points
@@ -127,8 +128,14 @@ generateMidpoint = function(e) {
     bcIndex += 2;
 
     // then join them up to get string art
-    generateStringArt(Q, R);
+    stringArtArr.push(generateStringArt(Q, R));
   }
+}
+
+toggleStringArt = function() {
+  stringArtArr.forEach(function(art){
+    art.visible = !art.visible;
+  })
 }
 
 // Draw parabola by applying formula to Q (on AB edge) and R (on BC edge)
@@ -154,10 +161,6 @@ drawParabola = function(e) {
     )
     parabola.add(P);
   }
-
-  stringArtArr.forEach(function(art){
-    art.visible = false;
-  })
 }
 
 // generate skeleton by drawing a perpendicular line at each point
@@ -168,15 +171,24 @@ generateSkeleton = function(e) {
 
   var vec, skeletonPath, P;
   for (var i = 0; i < stringArtArr.length; i++){
-    debugger;
-    vec = stringArtArr[i].getNormalAt(0);
-    P = parabola.segments[i+1].point;
-    skeletonPath = new Path(vec.subtract(5), vec.add(5));
+    vec = stringArtArr[i].getNormalAt(0).normalize(10);
+    for (var j = 0; j < parabola.segments.length; j++) {
+      if (_isOnPath(
+        parabola.segments[j].point,
+        stringArtArr[i].segments[0].point,
+        stringArtArr[i].segments[1].point)) {
+
+        P = parabola.segments[j].point;
+      }
+    }
+    skeletonPath = new Path(P.subtract(vec), P.add(vec));
     skeletonPath.strokeColor = 'red';
-    skeletonPath = skeletonPath.translate(P);
   }
 }
 
+_isOnPath = function(point, pt1, pt2) {
+  return pt1.subtract(point).angle == pt1.subtract(pt2).angle;
+}
 _distance = function(pt1, pt2) {
   return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y - pt2.y, 2));
 }
@@ -190,5 +202,6 @@ _lineVec = function(path) {
 globals = {
   generateMidpoint: generateMidpoint,
   drawParabola: drawParabola,
+  toggleStringArt: toggleStringArt,
   generateSkeleton: generateSkeleton
 }
